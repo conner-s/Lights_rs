@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 ipaddress = "0.1.2"
+local-ip = "0.1.0"
