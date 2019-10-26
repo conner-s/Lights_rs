@@ -1,17 +1,19 @@
 use std::time;
 use std::net;
-use std::str;
-use std::net::Ipv4Addr;
+use std::net::{Ipv4Addr, SocketAddr, IpAddr};
 use std::str::FromStr;
+use std::str;
+use std::io;
+use std::io::Error;
 
-pub fn scan(timeout: time::Duration) -> net::Ipv4Addr {
+pub fn scan(timeout: time::Duration) -> Result<net::Ipv4Addr, &'static str> {
     //Declaring return value to be able to keep it in scoop in the loop
     let mut ret_addr: Ipv4Addr = Ipv4Addr::new(0, 0, 0, 0);
-
 
     //Sets discovery socket address to Broadcast IP and to the port from flux_LED python API
     let sock = net::UdpSocket::bind("0.0.0.0:48899")
         .expect("Socket did not bind");
+
 
     //Takes current time for timeout purposes
     let now = time::Instant::now();
@@ -20,7 +22,6 @@ pub fn scan(timeout: time::Duration) -> net::Ipv4Addr {
     //Declares message to send to broadcast to LED controller
     let msg: String = "HF-A11ASSISTHREAD".to_string();
     let b_msg = msg.as_bytes();
-    let mut buffer = [0; 64];
 
     //Broadcasts
     sock.send_to(b_msg, "192.168.0.255:48899")
@@ -30,7 +31,8 @@ pub fn scan(timeout: time::Duration) -> net::Ipv4Addr {
     sock.set_read_timeout(Option::from(timeout))
         .expect("Could not set timout");
 
-
+    let default_socket: SocketAddr = SocketAddr::new(
+        IpAddr::from(Ipv4Addr::new(0,0,0,0)), 00000 );
     loop {
         //Timeout Break case
         if now.elapsed().as_secs() > timeout.as_secs() {
@@ -38,8 +40,19 @@ pub fn scan(timeout: time::Duration) -> net::Ipv4Addr {
         }
 
         //Checking for packets to receive
-        let (bytes_received, src_addr) = sock.recv_from(&mut buffer)
-            .expect("Did not receive data gram");
+        let (bytes_received, src_addr) = sock.recv_from(&mut buffer).unwrap_or((0,default_socket));
+
+//        let (bytes_received, src_addr) = match sock.recv_from(&mut buffer) {
+//            Ok(_) => {}
+//            Err(_) => {
+//                return Err("Did not receive")
+//            }
+//        };
+
+        if bytes_received == 0 {
+            return Err("Could not locate Device");
+        }
+
         //unwrapping pack info to text
         let filled_buf = &mut buffer[..bytes_received];
         let buff_to_ascii = filled_buf.to_ascii_lowercase();
@@ -53,7 +66,8 @@ pub fn scan(timeout: time::Duration) -> net::Ipv4Addr {
             break;
         }
     }
-    ret_addr
+
+    Ok(ret_addr)
 }
 
 #[cfg(test)]
