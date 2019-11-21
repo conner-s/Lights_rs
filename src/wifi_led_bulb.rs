@@ -28,7 +28,7 @@ mod wifi_led_bulb {
 
         ///Returns new instance of a bulb
         pub fn new(ip_addr: Ipv4Addr, port: u16) -> WifiLEDBulb{
-            let socket_addr: String = ip_addr.to_string().add(String::from(port).as_str());
+            let socket_addr: String = ip_addr.to_string().add(&std::string::ToString::to_string(&port).as_str());
             let sock = net::UdpSocket::bind(socket_addr).unwrap();
 
             let mut new_bulb = WifiLEDBulb {ip_addr, port, timeout: 5, protocol: "".to_string(), rgb_capable: false, rgb_protocol: false, raw_state: vec![], is_on: false, mode: "".to_string(), socket: sock, query_len: 0, use_checksum: false };
@@ -47,7 +47,10 @@ mod wifi_led_bulb {
             self.mode.to_string()
         }
 
+        ///TODO Implement Query Determine Length
+        pub fn determine_query_len(&self) {
 
+        }
 
         ///TODO Implement state update
         pub fn update_state(&self) {

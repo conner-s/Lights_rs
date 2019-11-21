@@ -3,8 +3,6 @@ use std::net;
 use std::net::{Ipv4Addr, SocketAddr, IpAddr};
 use std::str::FromStr;
 use std::str;
-use std::io;
-use std::io::Error;
 
 pub fn scan(timeout: time::Duration) -> Result<net::Ipv4Addr, &'static str> {
     //Declaring return value to be able to keep it in scoop in the loop
@@ -22,6 +20,7 @@ pub fn scan(timeout: time::Duration) -> Result<net::Ipv4Addr, &'static str> {
     //Declares message to send to broadcast to LED controller
     let msg: String = "HF-A11ASSISTHREAD".to_string();
     let b_msg = msg.as_bytes();
+    let mut buffer = [0; 64];
 
     //Broadcasts
     sock.send_to(b_msg, "192.168.0.255:48899")
